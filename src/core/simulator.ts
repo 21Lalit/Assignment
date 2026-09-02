@@ -226,6 +226,12 @@ export class SmartDialerSimulator {
 
   step(durationMs = this.configState.tickMs): SimulatorSnapshot {
     const duration = Math.max(1, Math.floor(durationMs));
+    this.advance(duration);
+    return this.snapshot();
+  }
+
+  /** Advances domain state without materializing a UI snapshot for every tick. */
+  private advance(duration: number): void {
     this.accumulateAgentTime(duration);
     this.nowMs += duration;
     this.expireRuntimeOverrides();
@@ -236,13 +242,13 @@ export class SmartDialerSimulator {
     this.heartbeatAndRecoverLeases();
     this.executePacingCycle();
     this.recordTrend();
-    return this.snapshot();
   }
 
   run(steps = 60, durationMs = this.configState.tickMs): SimulatorSnapshot {
     this.isRunning = true;
     const count = Math.max(0, Math.floor(steps));
-    for (let index = 0; index < count; index += 1) this.step(durationMs);
+    const duration = Math.max(1, Math.floor(durationMs));
+    for (let index = 0; index < count; index += 1) this.advance(duration);
     this.isRunning = false;
     return this.snapshot();
   }
@@ -256,11 +262,12 @@ export class SmartDialerSimulator {
     this.reset({ ...getScenario(id).config, scenario: id, seed: `${String(this.configState.seed)}:${id}` });
     this.isRunning = true;
     const count = Math.max(1, Math.floor(steps));
+    const duration = Math.max(1, Math.floor(durationMs));
     for (let index = 0; index < count; index += 1) {
       if (id === 'CRASH' && index === 2) this.inject({ type: 'WORKER_CRASH', workerId: 'worker-1' });
       if (id === 'OUTAGE' && index === 4) this.inject({ type: 'PROVIDER_OUTAGE', durationMs: 15_000 });
       if (id === 'AGENT_DROP' && index === 3) this.inject({ type: 'AGENT_DROP', count: 40 });
-      this.step(durationMs);
+      this.advance(duration);
     }
     this.isRunning = false;
     return this.snapshot();

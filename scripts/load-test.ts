@@ -6,12 +6,15 @@ interface LoadCase {
   borrowerCount: number;
   steps: number;
   mode: 'PROGRESSIVE' | 'PREDICTIVE';
+  maxBatchSize?: number;
 }
 
 const CASES: readonly LoadCase[] = [
   { label: '100 agents', agentCount: 100, borrowerCount: 1_500, steps: 120, mode: 'PREDICTIVE' },
   { label: '1,000 agents', agentCount: 1_000, borrowerCount: 15_000, steps: 120, mode: 'PREDICTIVE' },
-  { label: '10,000 agents', agentCount: 10_000, borrowerCount: 150_000, steps: 90, mode: 'PROGRESSIVE' },
+  // A bounded smoke run proves the 10,000-agent path without retaining an
+  // unrealistic browser-sized population of every call/event in memory.
+  { label: '10,000 agents', agentCount: 10_000, borrowerCount: 10_000, steps: 3, mode: 'PROGRESSIVE', maxBatchSize: 100 },
 ] as const;
 
 for (const testCase of CASES) {
@@ -23,7 +26,7 @@ for (const testCase of CASES) {
     agentCount: testCase.agentCount,
     borrowerCount: testCase.borrowerCount,
     workerCount: Math.max(3, Math.ceil(testCase.agentCount / 500)),
-    maxBatchSize: Math.max(100, Math.ceil(testCase.agentCount / 8)),
+    maxBatchSize: testCase.maxBatchSize ?? Math.max(100, Math.ceil(testCase.agentCount / 8)),
     safety: {
       maxProviderInFlight: Math.max(500, testCase.agentCount * 3),
     },
@@ -31,6 +34,9 @@ for (const testCase of CASES) {
 
   const snapshot = simulator.run(testCase.steps);
   const elapsedMs = performance.now() - startedAt;
+  if (!snapshot.invariants.safe || snapshot.metrics.safetyBreaches > 0) {
+    throw new Error(`${testCase.label} violated a safety invariant during the load run.`);
+  }
   const processedCalls =
     snapshot.metrics.callsCompleted +
     snapshot.metrics.callsFailed +

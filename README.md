@@ -2,7 +2,7 @@
 
 **SmartDialer safety and pacing control room for CredResolve's AI-native collections infrastructure.** It is a working, browser-based prototype for exploring utilization, call allocation, provider failure, and borrower-safe pacing decisions without placing real calls.
 
-[Open the live project](https://21lalit.github.io/Assignment/) · [Read the assignment brief](./Tech%20Assignment%20-%20Hiring%202026.pdf) · [Architecture](./docs/architecture.md) · [Safety model](./docs/safety-model.md)
+[Open the live project](https://21lalit.github.io/Assignment/) | [Read the assignment brief](./Tech%20Assignment%20-%20Hiring%202026.pdf) | [Architecture](./docs/architecture.md) | [Safety model](./docs/safety-model.md)
 
 > No customer data or telecom traffic is used. This is an executable system-design prototype, not a production collections platform.
 
@@ -88,10 +88,10 @@ The load script is a correctness-oriented synthetic test: it reports elapsed tim
 
 ## Design notes
 
-- [Architecture and scale](./docs/architecture.md) — components, transaction mapping, crash/outage/drop behavior, data model, observability, and the first bottleneck
-- [Agent and call state machines](./docs/state-machines.md) — exact transitions and duplicate/out-of-order reduction
-- [Predictive formula and safety invariants](./docs/safety-model.md) — proposal math, independent hard bound, fallbacks, and residual risk
-- [ADR 001](./docs/adr/001-typescript-in-memory-core.md) — why TypeScript/in-memory is appropriate here and how it moves to PostgreSQL plus an at-least-once queue
+- [Architecture and scale](./docs/architecture.md) - components, transaction mapping, crash/outage/drop behavior, data model, observability, and the first bottleneck
+- [Agent and call state machines](./docs/state-machines.md) - exact transitions and duplicate/out-of-order reduction
+- [Predictive formula and safety invariants](./docs/safety-model.md) - proposal math, independent hard bound, fallbacks, and residual risk
+- [ADR 001](./docs/adr/001-typescript-in-memory-core.md) - why TypeScript/in-memory is appropriate here and how it moves to PostgreSQL plus an at-least-once queue
 
 ## Repository map
 
@@ -125,4 +125,4 @@ For a new fork, select **GitHub Actions** as the Pages source in repository sett
 
 I would make prediction advisory and give a separate Safety Controller sole authority over capacity. Progressive calls reserve an agent before dialing. Predictive calls can pre-dial only inside a conservative upper-confidence envelope that includes unresolved calls, live availability, agent-loss signals, provider health, and a campaign risk budget; an answer must atomically claim an agent capacity token before it can connect. Sparse data, degraded providers, any breach, or stale capacity immediately forces progressive mode. Transactions, unique constraints, outbox/inbox idempotency, leases, and reconciliation preserve that rule across crashes and retries.
 
-There is an unavoidable boundary: if “deterministic safety” means zero possibility of an unserved answer under every outcome, the system cannot start more agent-bound calls than guaranteed agents. In that policy, prediction should optimize **which** borrower and **when** to call while the hard start count remains progressive. If the business accepts a quantified tail risk, predictive pre-dialing can reclaim more utilization—but that risk must be explicit, measured, and impossible for the pacing model to bypass.
+There is an unavoidable boundary: if "deterministic safety" means zero possibility of an unserved answer under every outcome, the system cannot start more agent-bound calls than guaranteed agents. In that policy, prediction should optimize **which** borrower and **when** to call while the hard start count remains progressive. If the business accepts a quantified tail risk, predictive pre-dialing can reclaim more utilization - but that risk must be explicit, measured, and impossible for the pacing model to bypass.

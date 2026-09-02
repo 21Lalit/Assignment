@@ -2,7 +2,7 @@
 
 ## Scope and trust boundary
 
-This repository is an executable, deterministic model of a SmartDialer control plane. The React control room and the simulation core run in one browser process; there is no real telephony, database, network worker, customer data, or compliance certification. The useful production artifact is the separation of decisions and the state/transaction semantics—not the in-memory deployment topology.
+This repository is an executable, deterministic model of a SmartDialer control plane. The React control room and the simulation core run in one browser process; there is no real telephony, database, network worker, customer data, or compliance certification. The useful production artifact is the separation of decisions and the state/transaction semantics, not the in-memory deployment topology.
 
 ```mermaid
 flowchart LR
@@ -148,6 +148,6 @@ Production should export the same dimensions as metrics and structured logs, cor
 | 1,000 | Full collection scans and a single allocation critical section create contention; snapshots/event fan-out get expensive. | PostgreSQL eligibility indexes, `SKIP LOCKED`, queue-backed workers, incremental aggregates, bounded UI sampling. |
 | 10,000 | A global agent pool/hot campaign row and provider rate limits dominate; webhook ingestion and telemetry cardinality surge. | Partition by campaign/tenant/skill and provider route, shard ordered work by call ID, maintain per-partition capacity tokens, apply provider quotas/backpressure, stream aggregated telemetry. |
 
-The **first bottleneck in this prototype** is the O(agents + borrowers + calls) scan/clone performed around each decision and snapshot, followed by browser rendering—not CPU time in the pacing formula. The first production correctness bottleneck is the shared allocation index/transaction: more workers contending for the same available-agent pool cause conflicts and latency before they add throughput. Fix the data access pattern and partition ownership; “add more servers” alone makes that contention worse.
+The **first bottleneck in this prototype** is the O(agents + borrowers + calls) scan/clone performed around each decision and snapshot, followed by browser rendering, not CPU time in the pacing formula. The first production correctness bottleneck is the shared allocation index/transaction: more workers contending for the same available-agent pool cause conflicts and latency before they add throughput. Fix the data access pattern and partition ownership; "add more servers" alone makes that contention worse.
 
 At every stage, preserve one global property locally: a partition may authorize only against capacity it owns. Moving to queues or shards must not introduce two authorities for the same agent.
