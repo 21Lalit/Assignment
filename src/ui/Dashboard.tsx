@@ -70,8 +70,8 @@ export function DashboardHeader({ status, elapsedTime, lastUpdatedLabel }: Heade
         <div className="header-context" aria-label="Application context">
           <span className="header-context__slash" aria-hidden="true" />
           <span>
-            <small>Recovery operations</small>
-            <strong>Decision control room</strong>
+            <small>AI-native collections OS</small>
+            <strong>Responsible recovery command center</strong>
           </span>
         </div>
 
@@ -251,9 +251,14 @@ export function ControlDeck(props: ControlDeckProps) {
     <section className="control-deck" aria-labelledby="control-deck-title">
       <div className="control-deck__intro">
         <div>
-          <span className="hero-kicker"><Icon name="spark" size={14} /> AI-powered recovery orchestration</span>
-          <h1 id="control-deck-title">SmartDialer operations</h1>
-          <p>Observe every pacing decision, test operational shocks, and keep customer conversations within safe limits.</p>
+          <span className="hero-kicker"><Icon name="spark" size={14} /> AI-native collections orchestration</span>
+          <h1 id="control-deck-title">Credit is a conversation. Run it with guardrails.</h1>
+          <p>Model progressive and predictive outreach, inspect every safety decision, and stress the recovery loop before a borrower ever hears a ring.</p>
+          <div className="hero-signal" aria-label="CredResolve value pillars">
+            <span>Safer handoffs</span>
+            <span>Faster collections</span>
+            <span>Full decision auditability</span>
+          </div>
         </div>
         <ModeTabs mode={props.mode} onModeChange={props.onModeChange} />
       </div>
@@ -308,6 +313,45 @@ export function MetricGrid({ metrics }: { metrics: MetricDatum[] }) {
           </article>
         );
       })}
+    </section>
+  );
+}
+
+function MissionStrip({
+  mode,
+  decision,
+  providers,
+}: {
+  mode: DialerMode;
+  decision: SafetyDecision;
+  providers: ProviderHealthDatum[];
+}) {
+  const primaryProvider = providers[0];
+  const modeLabel = mode === 'predictive' ? 'Predictive pacing active' : 'Progressive pacing active';
+  const postureLabel =
+    decision.state === 'safe'
+      ? 'Inside operating guardrails'
+      : decision.state === 'constrained'
+        ? 'Risk compressed by the safety controller'
+        : 'Dialing paused until conditions recover';
+
+  return (
+    <section className="mission-strip" aria-label="CredResolve operating thesis">
+      <article className="mission-card mission-card--thesis">
+        <span className="mission-card__eyebrow">Operating thesis</span>
+        <strong>{modeLabel}</strong>
+        <p>Collections velocity matters, but each answered attempt still needs a safe, accountable handoff.</p>
+      </article>
+      <article className="mission-card">
+        <span className="mission-card__eyebrow">Risk posture</span>
+        <strong>{postureLabel}</strong>
+        <p>{decision.guardrail}</p>
+      </article>
+      <article className="mission-card">
+        <span className="mission-card__eyebrow">Provider route</span>
+        <strong>{primaryProvider.name}</strong>
+        <p>{primaryProvider.latencyMs} ms latency, {primaryProvider.successRatePercent.toFixed(0)}% success, {primaryProvider.status} status.</p>
+      </article>
     </section>
   );
 }
@@ -706,8 +750,8 @@ export function AssignmentNote() {
       <div className="assignment-note__loop" aria-hidden="true"><BrandLoop /></div>
       <div>
         <span className="section-heading__eyebrow">CredResolve engineering assignment</span>
-        <strong>Designed for safe, explainable recovery conversations.</strong>
-        <p>This simulation demonstrates an observable pacing loop—not a production dialer. No customer data or real calls are used.</p>
+        <strong>Designed around borrower-safe, explainable recovery conversations.</strong>
+        <p>This prototype demonstrates the assignment brief’s core loop: progressive and predictive pacing, safety control, distributed-failure handling, and a fully observable audit trail. No customer data or real calls are used.</p>
       </div>
       <div className="assignment-note__tags" aria-label="Project characteristics">
         <span><Icon name="shield" size={13} /> Safety first</span>
@@ -749,6 +793,11 @@ export function SmartDialerDashboard({
         />
 
         <MetricGrid metrics={viewModel.metrics} />
+        <MissionStrip
+          mode={viewModel.mode}
+          decision={viewModel.safetyDecision}
+          providers={viewModel.providers}
+        />
 
         <div className="dashboard-columns">
           <div className="dashboard-columns__primary">
