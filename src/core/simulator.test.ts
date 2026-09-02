@@ -47,4 +47,15 @@ describe('SmartDialerSimulator', () => {
     expect(snapshot.safety.reasonCode).toBe('CIRCUIT_OPEN');
     expect(snapshot.safety.approvedCalls).toBe(0);
   });
+
+  it('clears a manually injected outage without advancing simulated time', () => {
+    const simulator = new SmartDialerSimulator({ scenario: 'B', seed: 'clear-outage-test' });
+    simulator.inject({ type: 'PROVIDER_OUTAGE', durationMs: 3_600_000 });
+    const beforeClear = simulator.snapshot();
+    const recovered = simulator.inject({ type: 'CLEAR_RUNTIME_OVERRIDE', override: 'PROVIDER_OUTAGE' });
+
+    expect(recovered.elapsedMs).toBe(beforeClear.elapsedMs);
+    expect(recovered.provider.circuitState).toBe('CLOSED');
+    expect(recovered.safety.approvedCalls).toBeGreaterThan(0);
+  });
 });

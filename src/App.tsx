@@ -53,8 +53,10 @@ export default function App() {
   const [status, setStatus] = useState<SimulationStatus>('idle');
   const [selectedScenarioId, setSelectedScenarioId] = useState<ScenarioId>(INITIAL_SCENARIO);
   const [activeFailures, setActiveFailures] = useState<Set<FailureId>>(() => new Set());
+  const activeFailuresRef = useRef<Set<FailureId>>(new Set());
   const [runSequence, setRunSequence] = useState(0);
   const presetInjectedRef = useRef(false);
+  const scenarioPhaseRef = useRef(0);
 
   const advance = useCallback(() => {
     const simulator = simulatorRef.current!;
@@ -66,6 +68,14 @@ export default function App() {
     if (!presetInjectedRef.current && selectedScenarioId === 'agent-drop' && next.elapsedMs >= 3_000) {
       presetInjectedRef.current = true;
       next = simulator.inject({ type: 'AGENT_DROP', count: 40 });
+    }
+    if (selectedScenarioId === 'd' && scenarioPhaseRef.current === 0 && next.elapsedMs >= 5_000) {
+      scenarioPhaseRef.current = 1;
+      next = simulator.configure({ answerRate: 0.7, averageTalkMs: 180_000 });
+    }
+    if (selectedScenarioId === 'd' && scenarioPhaseRef.current === 1 && next.elapsedMs >= 15_000) {
+      scenarioPhaseRef.current = 2;
+      next = simulator.configure({ answerRate: 0.2, averageTalkMs: 60_000 });
     }
     setSnapshot(next);
     if (isComplete(next)) setStatus('complete');
@@ -85,6 +95,8 @@ export default function App() {
   const resetScenario = useCallback((scenarioId: ScenarioId, mode: DialMode) => {
     const scenario = SCENARIO_TO_CORE[scenarioId];
     presetInjectedRef.current = false;
+    scenarioPhaseRef.current = 0;
+    activeFailuresRef.current = new Set();
     setActiveFailures(new Set());
     setStatus('idle');
     const next = simulatorRef.current!.reset({
@@ -120,43 +132,43 @@ export default function App() {
 
   const handleFailureToggle = useCallback((failureId: FailureId, active: boolean) => {
     const simulator = simulatorRef.current!;
-    const nextFailures = new Set(activeFailures);
+    const nextFailures = new Set(activeFailuresRef.current);
     if (active) nextFailures.add(failureId);
     else nextFailures.delete(failureId);
+    activeFailuresRef.current = nextFailures;
     setActiveFailures(nextFailures);
 
-    let next = snapshot;
+    let next = simulator.snapshot();
     switch (failureId) {
       case 'provider-latency':
         next = active
-          ? simulator.inject({ type: 'PROVIDER_LATENCY', latencyMs: 3_500, durationMs: 30_000 })
-          : simulator.step(31_000);
+          ? simulator.inject({ type: 'PROVIDER_LATENCY', latencyMs: 3_500, durationMs: 3_600_000 })
+          : simulator.inject({ type: 'CLEAR_RUNTIME_OVERRIDE', override: 'PROVIDER_LATENCY' });
         break;
       case 'provider-outage':
         next = active
-          ? simulator.inject({ type: 'PROVIDER_OUTAGE', durationMs: 15_000 })
-          : simulator.step(16_000);
+          ? simulator.inject({ type: 'PROVIDER_OUTAGE', durationMs: 3_600_000 })
+          : simulator.inject({ type: 'CLEAR_RUNTIME_OVERRIDE', override: 'PROVIDER_OUTAGE' });
         break;
       case 'agent-drop':
         if (active) {
-          next = simulator.inject({ type: 'AGENT_DROP', count: Math.min(40, snapshot.agentCounts.AVAILABLE) });
+          next = simulator.inject({ type: 'AGENT_DROP', count: Math.min(40, next.agentCounts.AVAILABLE) });
         } else {
-          for (const agent of snapshot.agents.filter((item) => item.state === 'OFFLINE').slice(0, 40)) {
+          for (const agent of next.agents.filter((item) => item.state === 'OFFLINE').slice(0, 40)) {
             next = simulator.inject({ type: 'SET_AGENT_STATE', agentId: agent.id, state: 'AVAILABLE' });
           }
         }
         break;
       case 'answer-spike': {
-        const configuredRate = getScenario(SCENARIO_TO_CORE[selectedScenarioId]).config.answerRate ?? 0.38;
         next = active
-          ? simulator.inject({ type: 'ANSWER_SPIKE', answerRate: 0.9, durationMs: 30_000 })
-          : simulator.configure({ answerRate: configuredRate });
+          ? simulator.inject({ type: 'ANSWER_SPIKE', answerRate: 0.9, durationMs: 3_600_000 })
+          : simulator.inject({ type: 'CLEAR_RUNTIME_OVERRIDE', override: 'ANSWER_SPIKE' });
         break;
       }
       case 'webhook-loss':
         next = active
-          ? simulator.inject({ type: 'WEBHOOK_LOSS', lossRate: 0.5, durationMs: 20_000 })
-          : simulator.step(21_000);
+          ? simulator.inject({ type: 'WEBHOOK_LOSS', lossRate: 0.5, durationMs: 3_600_000 })
+          : simulator.inject({ type: 'CLEAR_RUNTIME_OVERRIDE', override: 'WEBHOOK_LOSS' });
         break;
       case 'worker-crash':
         next = active
@@ -179,7 +191,7 @@ export default function App() {
       }
     }
     setSnapshot(next);
-  }, [activeFailures, selectedScenarioId, snapshot]);
+  }, [selectedScenarioId]);
 
   const viewModel = useMemo(
     () => toDashboardViewModel(snapshot, {

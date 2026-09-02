@@ -330,6 +330,18 @@ export class SmartDialerSimulator {
         this.log('PROVIDER', 'WARN', `Webhook loss set to ${round(lossRate * 100, 1)}% for ${duration}ms.`);
         break;
       }
+      case 'CLEAR_RUNTIME_OVERRIDE': {
+        const override = String(command.override).toUpperCase();
+        if (override === 'PROVIDER_LATENCY') this.latencyOverride = undefined;
+        if (override === 'ANSWER_SPIKE') this.answerOverride = undefined;
+        if (override === 'WEBHOOK_LOSS') this.webhookLossOverride = undefined;
+        if (override === 'PROVIDER_OUTAGE') {
+          this.outageUntil = undefined;
+          this.breaker.reset();
+        }
+        this.log('SYSTEM', 'INFO', `${override.replace(/_/g, ' ').toLowerCase()} override cleared.`);
+        break;
+      }
       case 'PROVIDER_EVENT': {
         const event = command.event as ProviderEvent | undefined;
         if (event) this.applyProviderEvent({ ...event, receivedAt: this.nowMs });

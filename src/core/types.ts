@@ -387,6 +387,7 @@ export type SimulatorCommand =
   | { type: 'PROVIDER_LATENCY'; latencyMs: number; durationMs?: number }
   | { type: 'ANSWER_SPIKE'; answerRate: number; durationMs: number }
   | { type: 'WEBHOOK_LOSS'; lossRate: number; durationMs: number }
+  | { type: 'CLEAR_RUNTIME_OVERRIDE'; override: 'PROVIDER_LATENCY' | 'PROVIDER_OUTAGE' | 'ANSWER_SPIKE' | 'WEBHOOK_LOSS' }
   | { type: 'PROVIDER_EVENT'; event: ProviderEvent }
   | { type: 'ENQUEUE_BORROWERS'; count: number }
   | {

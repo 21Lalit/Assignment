@@ -488,7 +488,7 @@ export function TrendChart({ points }: TrendChartProps) {
         title="Throughput & safe limit"
         titleId="trend-title"
         description="Calls per minute over the active simulation window"
-        action={lastPoint ? <span className="chart-current"><i /> Live · {lastPoint.dialRate} CPM</span> : null}
+        action={lastPoint ? <span className="chart-current"><i /> Live | {lastPoint.dialRate} CPM</span> : null}
       />
       <div className="chart-legend" aria-hidden="true">
         <span><i className="chart-key chart-key--dial" /> Dial rate</span>
@@ -751,7 +751,7 @@ export function AssignmentNote() {
       <div>
         <span className="section-heading__eyebrow">CredResolve engineering assignment</span>
         <strong>Designed around borrower-safe, explainable recovery conversations.</strong>
-        <p>This prototype demonstrates the assignment brief’s core loop: progressive and predictive pacing, safety control, distributed-failure handling, and a fully observable audit trail. No customer data or real calls are used.</p>
+        <p>This prototype demonstrates the assignment brief's core loop: progressive and predictive pacing, safety control, distributed-failure handling, and a fully observable audit trail. No customer data or real calls are used.</p>
       </div>
       <div className="assignment-note__tags" aria-label="Project characteristics">
         <span><Icon name="shield" size={13} /> Safety first</span>
